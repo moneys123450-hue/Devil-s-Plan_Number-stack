@@ -218,7 +218,15 @@ io.on('connection', (sock) => {
     const r = room;
     room = null;
     r.remove(pid);
+    // 진행 중인 방을 나가면 자리는 AI가 이어받고, 새로고침해도 다시 끌려 들어가지 않는다
+    r.members = r.members.filter((m) => m.id !== pid);
+    if (!r.members.length) { r.clear(); rooms.delete(r.code); }
     sock.emit('state', null);
+  });
+  sock.on('restart', () => {
+    if (!room?.g || room.hostId !== pid) return;
+    room.clear();
+    room.start();
   });
   sock.on('disconnect', () => {
     if (!room) return;

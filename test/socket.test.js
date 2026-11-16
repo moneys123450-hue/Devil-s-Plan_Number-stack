@@ -35,7 +35,7 @@ function bot(pid) {
 }
 const until = (c, pred, ms = 20000) => new Promise((res, rej) => {
   const t = setTimeout(() => rej(new Error('timeout')), ms);
-  const chk = () => { if (c.last && pred(c.last)) { clearTimeout(t); res(c.last); } else setTimeout(chk, 20); };
+  const chk = () => { if (c.last !== undefined && pred(c.last)) { clearTimeout(t); res(c.last); } else setTimeout(chk, 20); };
   chk();
 });
 
@@ -80,5 +80,28 @@ test('새로고침 복귀: 같은 pid로 다시 접속하면 같은 방·같은 
   clients.push(a2);
   const s2 = await new Promise((r) => a2.once('state', r));
   assert.equal(s2.code, s1.code);
+});
+
+test('다시 시작: 방장이 누르면 같은 방에서 새 게임, 나가기: 새로고침해도 그 방으로 돌아가지 않음', async () => {
+  const c = io(url, { auth: { pid: 'restart-player-1' }, forceNew: true });
+  clients.push(c);
+  c.on('state', (s) => (c.last = s));
+  c.emit('create', { name: '재시작', solo: true, settings: { phases: 1 } });
+  await until(c, (s) => s.game?.stage === 'select');
+  const code = c.last.code;
+  c.emit('submit', { chip: 'R', num: 3 });
+  await until(c, (s) => s.game?.hand.sub);
+  c.emit('restart');
+  const r = await until(c, (s) => s.game?.stage === 'draw' && !s.game.hand.sub && s.code === code);
+  assert.equal(r.game.hand.cards.length, 7);
+  c.emit('leave');
+  await until(c, (s) => s === null);
+  c.close();
+  const c2 = io(url, { auth: { pid: 'restart-player-1' }, forceNew: true });
+  clients.push(c2);
+  let got = 'none';
+  c2.on('state', (s) => (got = s));
+  await new Promise((r) => setTimeout(r, 300));
+  assert.equal(got, 'none');
   done();
 });

@@ -16,7 +16,11 @@
     <div><b>넘버 스택</b><small>NUMBER STACK</small></div>
   </div>
   <div id="status"></div>
-  <button id="rulesBtn" class="gold-btn">📖 게임설명</button>
+  <div class="top-btns">
+    <button id="restartBtn" hidden title="다시 시작">↻<span> 다시 시작</span></button>
+    <button id="leaveBtn" hidden title="방 나가기">⎋<span> 나가기</span></button>
+    <button id="rulesBtn" class="gold-btn" title="게임설명">📖<span> 게임설명</span></button>
+  </div>
 </header>
 
 <main>
@@ -52,6 +56,12 @@
 </main>
 
 <div id="overlay" class="modal" hidden></div>
+
+<div id="confirm" class="modal" hidden>
+  <div class="panel result"><p id="confirmMsg"></p>
+    <div class="row"><button id="confirmNo">취소</button><button id="confirmYes" class="primary">확인</button></div>
+  </div>
+</div>
 
 <div id="rules" class="modal" hidden>
   <div class="panel rules">

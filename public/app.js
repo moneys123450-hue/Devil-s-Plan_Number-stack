@@ -27,17 +27,34 @@ socket.on('state', (s) => {
 
 const COL = { R: ['#e0473d', '#8e1c15', 'RED'], G: ['#2fb862', '#0f5a2c', 'GREEN'], B: ['#3c82e6', '#173f80', 'BLUE'] };
 const CN = { R: '레드', G: '그린', B: '블루', W: '무지개' };
-const PX = { R: 500, G: 800, B: 1100 };
-const DISH = 400;
-// 내 자리(k=0)가 아래, 시계 방향으로 k=1..5
-const POS = [
-  { x: 800, y: 636, ax: -165, ay: 0 },
-  { x: 170, y: 560, ax: 0, ay: -100 },
-  { x: 210, y: 262, ax: 0, ay: -100 },
-  { x: 800, y: 58, ax: -165, ay: 0 },
-  { x: 1390, y: 262, ax: 0, ay: -100 },
-  { x: 1430, y: 560, ax: 0, ay: -100 },
-];
+// 보드 배치 2종: 가로 화면(데스크톱·가로 휴대폰) / 세로 휴대폰. 내 자리(k=0)가 아래, 시계 방향으로 k=1..5
+const LAYOUTS = {
+  wide: {
+    W: 1600, H: 680, TB: { cx: 800, cy: 425, rx: 650, ry: 210 }, PX: { R: 500, G: 800, B: 1100 }, DISH: 400,
+    POS: [
+      { x: 800, y: 636, ax: -165, ay: 0 }, { x: 170, y: 560, ax: 0, ay: -100 }, { x: 210, y: 262, ax: 0, ay: -100 },
+      { x: 800, y: 58, ax: -165, ay: 0 }, { x: 1390, y: 262, ax: 0, ay: -100 }, { x: 1430, y: 560, ax: 0, ay: -100 },
+    ],
+    arches: [330, 1050], pillars: [40, 1504, 620, 924], F: 1,
+  },
+  tall: {
+    W: 1000, H: 1400, TB: { cx: 500, cy: 760, rx: 475, ry: 470 }, PX: { R: 230, G: 500, B: 770 }, DISH: 800,
+    POS: [
+      { x: 500, y: 1336, ax: -235, ay: 0 }, { x: 172, y: 1150, ax: 0, ay: -112 }, { x: 172, y: 390, ax: 0, ay: -112 },
+      { x: 500, y: 112, ax: -235, ay: 0 }, { x: 828, y: 390, ax: 0, ay: -112 }, { x: 828, y: 1150, ax: 0, ay: -112 },
+    ],
+    arches: [120, 660], pillars: [20, 924], F: 1.6, // 휴대폰에서 글씨가 읽히도록 이름표 확대
+  },
+};
+let LY = null, W, H, TB, PX, DISH, POS;
+function applyLayout() {
+  const next = innerWidth < 760 && innerHeight > innerWidth ? LAYOUTS.tall : LAYOUTS.wide;
+  if (next === LY) return false;
+  LY = next;
+  ({ W, H, TB, PX, DISH, POS } = LY);
+  for (const id of ['#board', '#fx']) $(id)?.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  return true;
+}
 const HUE = [12, 200, 280, 40, 150, 330];
 const rel = (G, seat) => (seat - (G.me ?? 0) + 6) % 6;
 const nameOf = (G, s) => esc(G.players[s].name);
@@ -55,13 +72,17 @@ function render() {
 
 const STAGE = { draw: '선 뽑기', select: '카드 선택', play: '행동 페이즈', phaseEnd: '페이즈 종료', over: '게임 종료' };
 function renderStatus() {
-  if (!S) return ($('#status').innerHTML = '');
+  if (!S) { $('#leaveBtn').hidden = $('#restartBtn').hidden = true; return ($('#status').innerHTML = ''); }
   const G = S.game;
-  $('#status').innerHTML = `<span class="pill copy" id="codePill" title="초대 링크 복사">방 코드<b>${esc(S.code)}</b> ⧉</span>` +
-    (G ? `<span class="pill">페이즈<b>${G.phase} / ${G.phases}</b></span>
+  const host = S.hostId === S.you;
+  $('#leaveBtn').hidden = false;
+  $('#restartBtn').hidden = !(G && host);
+  const L = (long, short) => `<span class="lbl">${long}</span><span class="lbl-s">${short}</span>`;
+  $('#status').innerHTML = `<span class="pill copy ${G ? 'ingame' : ''}" id="codePill" title="초대 링크 복사">${L('방 코드', '')}<b>${esc(S.code)}</b> ⧉</span>` +
+    (G ? `<span class="pill">${L('페이즈', 'P')}<b>${G.phase}/${G.phases}</b></span>
       <span class="pill stage">${STAGE[G.stage] ?? ''}</span>
-      <span class="pill">라운드<b>${G.round} / ${G.rounds}</b></span>
-      <span class="pill timer" id="timer">남은 시간<b>--</b></span>` : '');
+      <span class="pill">${L('라운드', 'R')}<b>${G.round}/${G.rounds}</b></span>
+      <span class="pill timer" id="timer">${L('남은 시간', '⏱')}<b>--</b></span>` : '');
   $('#codePill').onclick = copyLink;
   tickTimer();
 }
@@ -282,19 +303,19 @@ function defs() {
 }
 
 function hall() {
-  const pillar = (x) => `<rect x="${x}" y="0" width="56" height="680" fill="#1a1320"/><rect x="${x + 4}" y="0" width="4" height="680" fill="#c99a45" opacity=".35"/><rect x="${x + 48}" y="0" width="4" height="680" fill="#c99a45" opacity=".2"/>`;
+  const pillar = (x) => `<rect x="${x}" y="0" width="56" height="${H}" fill="#1a1320"/><rect x="${x + 4}" y="0" width="4" height="${H}" fill="#c99a45" opacity=".35"/><rect x="${x + 48}" y="0" width="4" height="${H}" fill="#c99a45" opacity=".2"/>`;
   const arch = (x) => `<path d="M${x} 330 V140 A110 110 0 0 1 ${x + 220} 140 V330" fill="#0d1a2e" stroke="#6b5426" stroke-width="4" opacity=".7"/>
     <path d="M${x + 110} 30 V330 M${x} 190 H${x + 220}" stroke="#6b5426" stroke-width="3" opacity=".5"/>`;
-  return `<rect width="1600" height="680" fill="url(#bgG)"/>${arch(330)}${arch(1050)}${pillar(40)}${pillar(1504)}${pillar(620)}${pillar(924)}
-    <rect y="300" width="1600" height="380" fill="#0b080e" opacity=".55"/>`;
+  return `<rect width="${W}" height="${H}" fill="url(#bgG)"/>${LY.arches.map(arch).join('')}${LY.pillars.map(pillar).join('')}
+    <rect y="300" width="${W}" height="${H - 300}" fill="#0b080e" opacity=".55"/>`;
 }
 
 function table() {
-  return `<ellipse cx="800" cy="440" rx="660" ry="222" fill="#000" opacity=".5" filter="url(#blur)"/>
-    <ellipse cx="800" cy="425" rx="650" ry="210" fill="url(#marble)" stroke="url(#goldg)" stroke-width="10"/>
-    <ellipse cx="800" cy="425" rx="600" ry="186" fill="none" stroke="#c99a45" stroke-width="2" opacity=".55"/>
-    <ellipse cx="800" cy="425" rx="420" ry="128" fill="none" stroke="#c99a45" stroke-width="1.5" opacity=".35"/>
-    <path d="M220 400 Q420 330 640 420 T1100 380 M300 500 Q600 450 900 520 T1380 470" stroke="#8a8090" stroke-width="1.5" fill="none" opacity=".18"/>`;
+  const { cx, cy, rx, ry } = TB;
+  const ring = (dx, dy, w, o) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx - dx}" ry="${ry - dy}" fill="none" stroke="#c99a45" stroke-width="${w}" opacity="${o}"/>`;
+  return `<ellipse cx="${cx}" cy="${cy + 15}" rx="${rx + 10}" ry="${ry + 12}" fill="#000" opacity=".5" filter="url(#blur)"/>
+    <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#marble)" stroke="url(#goldg)" stroke-width="10"/>
+    ${ring(50, 24, 2, 0.55)}${ring(rx * 0.35, ry * 0.39, 1.5, 0.35)}`;
 }
 
 function atlas(c) {
@@ -337,7 +358,7 @@ function stackSVG(G, c, fresh) {
   const blocks = s.map((n, i) => block(PX[c], base - (i + 1) * h, h, c, n, fresh && i === s.length - 1 ? 'drop' : '')).join('');
   const ty = base - s.length * h - 24;
   const danger = total >= 9 ? '#ff6b5e' : total >= 6 ? '#ffd76a' : '#e8dcc0';
-  return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="17" fill="${danger}" stroke="#000a" stroke-width="3" paint-order="stroke">합 ${total} / 13</text>`;
+  return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="${17 * LY.F}" fill="${danger}" stroke="#000a" stroke-width="3" paint-order="stroke">합 ${total} / 13</text>`;
 }
 
 function crown(x, y) {
@@ -352,22 +373,23 @@ function seatSVG(G, p) {
   const avatar = `${chair}<circle cx="${avX}" cy="${avY}" r="42" fill="hsl(${HUE[p.seat]} 45% 32%)" stroke="url(#goldg)" stroke-width="4" filter="url(#shadow)"/>
     <text x="${avX}" y="${avY + 13}" text-anchor="middle" font-family="Noto Serif KR" font-weight="900" font-size="36" fill="#f6e7c4">${esc([...p.name][0] ?? '?')}</text>
     ${p.ai ? `<rect x="${avX + 18}" y="${avY + 22}" width="30" height="18" rx="5" fill="#2c2238" stroke="#8d72f0"/><text x="${avX + 33}" y="${avY + 35}" text-anchor="middle" font-size="11" font-weight="700" fill="#cbbcff">AI</text>` : ''}`;
-  const sx = x + (k === 0 || k === 3 ? 150 : x < 800 ? 145 : -145);
+  const F = LY.F;
+  const sx = x + (k === 0 || k === 3 ? 150 : x < TB.cx ? 145 : -145) * F;
   let side = '';
   if (p.sub) {
     side = `<circle cx="${sx - 18}" cy="${y}" r="16" fill="${p.sub.chip === 'W' ? 'url(#rainbow)' : COL[p.sub.chip][0]}" stroke="#fff" stroke-width="2" stroke-dasharray="4 3"/>
       <rect x="${sx + 4}" y="${y - 22}" width="30" height="44" rx="4" fill="#f6e8c6" stroke="#c9a75b" stroke-width="2"/>
       <text x="${sx + 19}" y="${y + 9}" text-anchor="middle" font-family="Cinzel" font-weight="700" font-size="24" fill="#2a1e10">${p.sub.num}</text>`;
   } else if (G.stage === 'select') {
-    side = `<text x="${sx}" y="${y + 6}" text-anchor="middle" font-size="15" font-weight="700" fill="${p.submitted ? '#7fe0a0' : '#9b907c'}">${p.submitted ? '✓ 제출' : '선택 중…'}</text>`;
+    side = `<text x="${sx}" y="${y + 6}" text-anchor="middle" font-size="${15 * F}" font-weight="700" fill="${p.submitted ? '#7fe0a0' : '#9b907c'}">${p.submitted ? '✓ 제출' : '선택 중…'}</text>`;
   }
   const label = `${esc(p.name)}${p.seat === G.me ? ' (나)' : ''}${p.connected ? '' : ' · 끊김'}`;
   return `<g>${avatar}
-    ${cur ? `<rect class="glow" x="${x - 112}" y="${y - 44}" width="224" height="88" rx="16" fill="none" stroke="#ffd76a" stroke-width="5"/>` : ''}
-    <rect x="${x - 102}" y="${y - 36}" width="204" height="72" rx="12" fill="#120d18" fill-opacity=".92" stroke="${cur ? '#ffd76a' : '#6b5426'}" stroke-width="2" filter="url(#shadow)"/>
-    ${G.starter === p.seat ? crown(x - 92, y - 28) : ''}
-    <text x="${x}" y="${y - 10}" text-anchor="middle" font-size="17" font-weight="700" fill="#efe6d2">${label}</text>
-    <text x="${x}" y="${y + 26}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="30" fill="${p.penalty ? '#ff4f45' : '#8f8676'}">${p.penalty ? '-' + p.penalty : '0'}</text>
+    ${cur ? `<rect class="glow" x="${x - 112 * F}" y="${y - 44 * F}" width="${224 * F}" height="${88 * F}" rx="16" fill="none" stroke="#ffd76a" stroke-width="5"/>` : ''}
+    <rect x="${x - 102 * F}" y="${y - 36 * F}" width="${204 * F}" height="${72 * F}" rx="12" fill="#120d18" fill-opacity=".92" stroke="${cur ? '#ffd76a' : '#6b5426'}" stroke-width="2" filter="url(#shadow)"/>
+    ${G.starter === p.seat ? crown(x - 92 * F, y - 28 * F) : ''}
+    <text x="${x}" y="${y - 10 * F}" text-anchor="middle" font-size="${17 * F}" font-weight="700" fill="#efe6d2">${label}</text>
+    <text x="${x}" y="${y + 26 * F}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${30 * F}" fill="${p.penalty ? '#ff4f45' : '#8f8676'}">${p.penalty ? '-' + p.penalty : '0'}</text>
     ${side}</g>`;
 }
 
@@ -381,7 +403,7 @@ function boardSVG(G) {
 /* ---------- 이벤트 연출 (별도 SVG 레이어라 보드가 다시 그려져도 끊기지 않는다) ---------- */
 function effects(G) {
   const last = G.log.at(-1)?.id ?? 0;
-  if (seenEvt < 0) { seenEvt = last; return; } // 첫 접속·새로고침: 지난 연출은 다시 틀지 않는다
+  if (seenEvt < 0 || last < seenEvt) { seenEvt = last; return; } // 첫 접속·새로고침·다시 시작 // 첫 접속·새로고침: 지난 연출은 다시 틀지 않는다
   for (const e of G.log) {
     if (e.id <= seenEvt) continue;
     if (e.type === 'stack') {
@@ -410,11 +432,24 @@ function burstFX(G, e) {
 }
 
 document.querySelector('.board-wrap').insertAdjacentHTML('beforeend',
-  '<svg id="fx" viewBox="0 0 1600 680" preserveAspectRatio="xMidYMid meet"><defs><filter id="fxblur"><feGaussianBlur stdDeviation="30"/></filter></defs></svg>');
+  '<svg id="fx" preserveAspectRatio="xMidYMid meet"><defs><filter id="fxblur"><feGaussianBlur stdDeviation="30"/></filter></defs></svg>');
+
+/* ---------- 나가기 / 다시 시작 ---------- */
+function ask(msg, yes) {
+  $('#confirmMsg').textContent = msg;
+  $('#confirm').hidden = false;
+  $('#confirmYes').onclick = () => { $('#confirm').hidden = true; yes(); };
+}
+$('#confirmNo').onclick = () => ($('#confirm').hidden = true);
+$('#leaveBtn').onclick = () => ask(S?.game && S.game.stage !== 'over'
+  ? '진행 중인 방을 나갈까요? 내 자리는 AI가 이어서 플레이합니다.' : '방을 나갈까요?', () => socket.emit('leave'));
+$('#restartBtn').onclick = () => ask('지금 게임을 끝내고 같은 인원·설정으로 처음부터 다시 시작할까요?', () => socket.emit('restart'));
 
 /* ---------- 게임설명 ---------- */
 $('#rulesBtn').onclick = () => ($('#rules').hidden = false);
 $('#rules').onclick = (e) => { if (e.target.id === 'rules' || e.target.dataset.close != null) $('#rules').hidden = true; };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#rules').hidden = true; });
 
+applyLayout();
+addEventListener('resize', () => { if (applyLayout() && S?.game) render(); });
 render();
