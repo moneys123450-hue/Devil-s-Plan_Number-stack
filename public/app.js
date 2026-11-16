@@ -366,8 +366,11 @@ function stackSVG(G, c, fresh) {
   return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="${17 * 1.7 * LY.F}" fill="${danger}" stroke="#000a" stroke-width="5" paint-order="stroke">${total} / 13</text>`;
 }
 
-function crown(x, y) {
-  return `<path transform="translate(${x} ${y}) scale(.42)" d="M2 30 L6 6 L16 18 L25 0 L34 18 L44 6 L48 30 Z" fill="url(#goldg)" stroke="#5b4320" stroke-width="2"/>`;
+// 선 플레이어 딱지: 이름표 왼쪽 위 모서리에 걸친 빨간 배지
+function starterTag(x, y, F) {
+  const w = 46 * F, h = 30 * F;
+  return `<rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="${8 * F}" fill="#d8322a" stroke="#ffd76a" stroke-width="${2.5 * F}" filter="url(#shadow)"/>
+    <text x="${x}" y="${y + 7 * F}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${20 * F}" fill="#fff">선</text>`;
 }
 
 function seatSVG(G, p) {
@@ -387,11 +390,11 @@ function seatSVG(G, p) {
   return `<g>
     ${cur ? `<rect class="glow" x="${x - 112 * F}" y="${y - 44 * F}" width="${224 * F}" height="${88 * F}" rx="16" fill="none" stroke="#ffd76a" stroke-width="5"/>` : ''}
     <rect x="${x - 102 * F}" y="${y - 36 * F}" width="${204 * F}" height="${72 * F}" rx="12" fill="#120d18" fill-opacity=".92" stroke="${cur ? '#ffd76a' : '#6b5426'}" stroke-width="2" filter="url(#shadow)"/>
-    ${G.starter === p.seat ? crown(x - 92 * F, y - 28 * F) : ''}
+    
     ${p.ai ? `<text x="${x + 90 * F}" y="${y - 20 * F}" text-anchor="end" font-size="${11 * F}" font-weight="700" fill="#a58cff">AI</text>` : ''}
     <text x="${x}" y="${y - 10 * F}" text-anchor="middle" font-size="${17 * F}" font-weight="700" fill="#efe6d2">${label}</text>
     <text x="${x}" y="${y + 26 * F}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${30 * F}" fill="${p.penalty ? '#ff4f45' : '#8f8676'}">${p.penalty ? '-' + p.penalty : '0'}</text>
-    ${side}</g>`;
+    ${side}${G.starter === p.seat ? starterTag(x - 96 * F, y - 36 * F, F) : ''}</g>`;
 }
 
 let fresh = null; // 방금 쌓인 탑(떨어지는 연출)
