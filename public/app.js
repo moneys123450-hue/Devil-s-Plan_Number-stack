@@ -55,7 +55,6 @@ function applyLayout() {
   for (const id of ['#board', '#fx']) $(id)?.setAttribute('viewBox', `0 0 ${W} ${H}`);
   return true;
 }
-const HUE = [12, 200, 280, 40, 150, 330];
 const rel = (G, seat) => (seat - (G.me ?? 0) + 6) % 6;
 const nameOf = (G, s) => esc(G.players[s].name);
 const chipDot = (c) => `<span class="mini-chip chip-${c}"></span>`;
@@ -295,7 +294,6 @@ function defs() {
     <linearGradient id="goldg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9ad"/><stop offset=".5" stop-color="#c99a45"/><stop offset="1" stop-color="#6e4f1c"/></linearGradient>
     <linearGradient id="bronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0b688"/><stop offset=".5" stop-color="#8f5e38"/><stop offset="1" stop-color="#3a2313"/></linearGradient>
     <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d4d"/><stop offset=".3" stop-color="#ffe94d"/><stop offset=".55" stop-color="#4dff88"/><stop offset=".8" stop-color="#4dc3ff"/><stop offset="1" stop-color="#b34dff"/></linearGradient>
-    <linearGradient id="leather" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a2a2c"/><stop offset="1" stop-color="#240f12"/></linearGradient>
     ${['R', 'G', 'B'].map(blk).join('')}
     <filter id="blur"><feGaussianBlur stdDeviation="16"/></filter>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".65"/></filter>
@@ -358,7 +356,7 @@ function stackSVG(G, c, fresh) {
   const blocks = s.map((n, i) => block(PX[c], base - (i + 1) * h, h, c, n, fresh && i === s.length - 1 ? 'drop' : '')).join('');
   const ty = base - s.length * h - 30;
   const danger = total >= 9 ? '#ff6b5e' : total >= 6 ? '#ffd76a' : '#e8dcc0';
-  return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="${17 * 1.7 * LY.F}" fill="${danger}" stroke="#000a" stroke-width="5" paint-order="stroke">합 ${total} / 13</text>`;
+  return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="${17 * 1.7 * LY.F}" fill="${danger}" stroke="#000a" stroke-width="5" paint-order="stroke">${total} / 13</text>`;
 }
 
 function crown(x, y) {
@@ -366,13 +364,8 @@ function crown(x, y) {
 }
 
 function seatSVG(G, p) {
-  const k = rel(G, p.seat), { x, y, ax, ay } = POS[k];
+  const k = rel(G, p.seat), { x, y } = POS[k];
   const cur = G.current === p.seat;
-  const avX = x + ax, avY = y + ay;
-  const chair = k === 0 ? '' : `<rect x="${avX - 58}" y="${avY - 66}" width="116" height="150" rx="34" fill="url(#leather)" stroke="#c99a45" stroke-width="2" opacity=".9"/>`;
-  const avatar = `${chair}<circle cx="${avX}" cy="${avY}" r="42" fill="hsl(${HUE[p.seat]} 45% 32%)" stroke="url(#goldg)" stroke-width="4" filter="url(#shadow)"/>
-    <text x="${avX}" y="${avY + 13}" text-anchor="middle" font-family="Noto Serif KR" font-weight="900" font-size="36" fill="#f6e7c4">${esc([...p.name][0] ?? '?')}</text>
-    ${p.ai ? `<rect x="${avX + 18}" y="${avY + 22}" width="30" height="18" rx="5" fill="#2c2238" stroke="#8d72f0"/><text x="${avX + 33}" y="${avY + 35}" text-anchor="middle" font-size="11" font-weight="700" fill="#cbbcff">AI</text>` : ''}`;
   const F = LY.F;
   const sx = x + (k === 0 || k === 3 ? 150 : x < TB.cx ? 145 : -145) * F;
   let side = '';
@@ -384,10 +377,11 @@ function seatSVG(G, p) {
     side = `<text x="${sx}" y="${y + 6}" text-anchor="middle" font-size="${15 * F}" font-weight="700" fill="${p.submitted ? '#7fe0a0' : '#9b907c'}">${p.submitted ? '✓ 제출' : '선택 중…'}</text>`;
   }
   const label = `${esc(p.name)}${p.seat === G.me ? ' (나)' : ''}${p.connected ? '' : ' · 끊김'}`;
-  return `<g>${avatar}
+  return `<g>
     ${cur ? `<rect class="glow" x="${x - 112 * F}" y="${y - 44 * F}" width="${224 * F}" height="${88 * F}" rx="16" fill="none" stroke="#ffd76a" stroke-width="5"/>` : ''}
     <rect x="${x - 102 * F}" y="${y - 36 * F}" width="${204 * F}" height="${72 * F}" rx="12" fill="#120d18" fill-opacity=".92" stroke="${cur ? '#ffd76a' : '#6b5426'}" stroke-width="2" filter="url(#shadow)"/>
     ${G.starter === p.seat ? crown(x - 92 * F, y - 28 * F) : ''}
+    ${p.ai ? `<text x="${x + 90 * F}" y="${y - 20 * F}" text-anchor="end" font-size="${11 * F}" font-weight="700" fill="#a58cff">AI</text>` : ''}
     <text x="${x}" y="${y - 10 * F}" text-anchor="middle" font-size="${17 * F}" font-weight="700" fill="#efe6d2">${label}</text>
     <text x="${x}" y="${y + 26 * F}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${30 * F}" fill="${p.penalty ? '#ff4f45' : '#8f8676'}">${p.penalty ? '-' + p.penalty : '0'}</text>
     ${side}</g>`;
