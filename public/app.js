@@ -337,8 +337,8 @@ function atlas(c) {
   </g>`;
 }
 
-function block(x, y, h, c, num, cls = '') {
-  const w = 104, d = 14, l = x - w / 2 - d / 2;
+function block(x, y, h, c, num, cls = '', w = 104) {
+  const d = 14, l = x - w / 2 - d / 2;
   return `<g class="${cls}">
     <polygon points="${l},${y} ${l + d},${y - d} ${l + w + d},${y - d} ${l + w},${y}" fill="${COL[c][0]}" opacity=".95"/>
     <polygon points="${l + w},${y} ${l + w + d},${y - d} ${l + w + d},${y + h - d} ${l + w},${y + h}" fill="${COL[c][1]}"/>
@@ -348,13 +348,20 @@ function block(x, y, h, c, num, cls = '') {
   </g>`;
 }
 
+// 블럭은 2줄로 쌓는다: 1층 왼쪽 → 1층 오른쪽 → 2층 왼쪽 … (마지막 블럭이 항상 맨 위)
+const BW = 78, BGAP = 8;
+const rowH = (n) => Math.min(46, 270 / Math.max(1, Math.ceil(n / 2)));
+function blocks2(c, nums, lastCls = '') {
+  const h = rowH(nums.length), base = DISH - 18;
+  return nums.map((n, i) => block(PX[c] + (i % 2 ? 1 : -1) * (BW + BGAP) / 2, base - (Math.floor(i / 2) + 1) * h, h, c, n,
+    i === nums.length - 1 ? lastCls : '', BW)).join('');
+}
+
 function stackSVG(G, c, fresh) {
   const s = G.tables[c];
-  const h = Math.min(46, 270 / Math.max(1, s.length));
-  const base = DISH - 18;
   const total = s.reduce((a, b) => a + b, 0);
-  const blocks = s.map((n, i) => block(PX[c], base - (i + 1) * h, h, c, n, fresh && i === s.length - 1 ? 'drop' : '')).join('');
-  const ty = base - s.length * h - 30;
+  const blocks = blocks2(c, s, fresh ? 'drop' : '');
+  const ty = DISH - 18 - Math.ceil(s.length / 2) * rowH(s.length) - 30;
   const danger = total >= 9 ? '#ff6b5e' : total >= 6 ? '#ffd76a' : '#e8dcc0';
   return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="${17 * 1.7 * LY.F}" fill="${danger}" stroke="#000a" stroke-width="5" paint-order="stroke">${total} / 13</text>`;
 }
@@ -414,8 +421,7 @@ function effects(G) {
 
 function burstFX(G, e) {
   const fx = $('#fx');
-  const h = Math.min(46, 270 / Math.max(1, e.removed.length + 1));
-  const blocks = e.removed.map((n, i) => block(PX[e.table], DISH - 18 - (i + 1) * h, h, e.table, n)).join('');
+  const blocks = blocks2(e.table, e.removed);
   const { x, y } = POS[rel(G, e.seat)];
   const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   g.innerHTML = `<ellipse cx="${PX[e.table]}" cy="${DISH - 80}" rx="110" ry="150" fill="${COL[e.table][0]}" class="float" filter="url(#fxblur)"/>
