@@ -356,9 +356,9 @@ function stackSVG(G, c, fresh) {
   const base = DISH - 18;
   const total = s.reduce((a, b) => a + b, 0);
   const blocks = s.map((n, i) => block(PX[c], base - (i + 1) * h, h, c, n, fresh && i === s.length - 1 ? 'drop' : '')).join('');
-  const ty = base - s.length * h - 24;
+  const ty = base - s.length * h - 30;
   const danger = total >= 9 ? '#ff6b5e' : total >= 6 ? '#ffd76a' : '#e8dcc0';
-  return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="${17 * LY.F}" fill="${danger}" stroke="#000a" stroke-width="3" paint-order="stroke">합 ${total} / 13</text>`;
+  return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="${17 * 1.7 * LY.F}" fill="${danger}" stroke="#000a" stroke-width="5" paint-order="stroke">합 ${total} / 13</text>`;
 }
 
 function crown(x, y) {
