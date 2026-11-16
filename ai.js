@@ -5,11 +5,11 @@ import { COLORS, WILD, LIMIT, N, ROUNDS, sum, turnOrder, randomPick } from './en
 
 // aggr: 남에게 벌점 떠넘기기 선호, chaos: 판단 흔들림(안정적 플레이만 하지 않게), hoard: 0·와일드 아껴두기
 export const PERSONAS = [
-  { name: '블루호크', aggr: 0.8, chaos: 0.25, hoard: 0.5 },
+  { name: '블루윙', aggr: 0.8, chaos: 0.25, hoard: 0.5 },
   { name: '루비나', aggr: 0.3, chaos: 0.15, hoard: 0.9 },
   { name: '논리왕', aggr: 0.5, chaos: 0.05, hoard: 0.7 },
-  { name: '카드장인', aggr: 0.2, chaos: 0.2, hoard: 0.4 },
-  { name: '스택마스터', aggr: 1.0, chaos: 0.3, hoard: 0.3 },
+  { name: '카드킹', aggr: 0.2, chaos: 0.2, hoard: 0.4 },
+  { name: '스택맨', aggr: 1.0, chaos: 0.3, hoard: 0.3 },
   { name: '설화린', aggr: 0.4, chaos: 0.35, hoard: 0.6 },
 ];
 const DEF = { aggr: 0.5, chaos: 0.1, hoard: 0.6 };

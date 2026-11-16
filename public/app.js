@@ -189,7 +189,7 @@ function renderSide(G) {
 function logText(G, e) {
   if (e.type === 'draw') return `페이즈 ${e.phase} 시작 — 선 뽑기: <b>${nameOf(G, e.seat)}</b>`;
   if (e.type === 'reveal') return `라운드 ${e.round} 카드 공개`;
-  if (e.type === 'pass') return `${nameOf(G, e.seat)} 패스 (맨 뒤로)`;
+  if (e.type === 'pass') return `${nameOf(G, e.seat)} 패스`;
   return `${nameOf(G, e.seat)} → <span class="c-${e.table}">${COL[e.table][2]}</span>에 ${e.num}${e.chip === 'W' ? ' (무지개)' : ''}` +
     (e.removed.length ? ` <span class="pen">벌점 -${e.removed.length}</span>` : '');
 }
@@ -416,7 +416,7 @@ function effects(G) {
         burstFX(G, e);
         toast(`${G.players[e.seat].name} 벌점 -${e.removed.length}!`);
       }
-    } else if (e.type === 'pass') toast(`${G.players[e.seat].name} 패스 — 순서 맨 뒤로`);
+    } else if (e.type === 'pass') toast(`${G.players[e.seat].name} 패스`);
     else if (e.type === 'reveal') toast('카드 공개! 행동 순서가 정해졌습니다');
   }
   seenEvt = last;

@@ -182,3 +182,8 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color:
   #hand { flex-wrap: nowrap; justify-content: flex-start; padding: 4px 10px; }
   .actions { width: auto; margin-left: auto; flex-wrap: nowrap; }
 }
+/* 휴대폰 알림: 한 줄, 작게, 상단바 바로 아래 */
+@media (max-width: 760px) {
+  #toast { top: 44px; max-width: 94vw; }
+  #toast div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; padding: 4px 12px; margin-bottom: 4px; border-radius: 8px; text-align: center; }
+}
