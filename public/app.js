@@ -35,7 +35,7 @@ const LAYOUTS = {
       { x: 800, y: 636, ax: -165, ay: 0 }, { x: 170, y: 560, ax: 0, ay: -100 }, { x: 210, y: 262, ax: 0, ay: -100 },
       { x: 800, y: 58, ax: -165, ay: 0 }, { x: 1390, y: 262, ax: 0, ay: -100 }, { x: 1430, y: 560, ax: 0, ay: -100 },
     ],
-    arches: [330, 1050], pillars: [40, 1504, 620, 924], F: 1,
+    F: 1,
   },
   tall: {
     W: 1000, H: 1400, TB: { cx: 500, cy: 760, rx: 475, ry: 470 }, PX: { R: 230, G: 500, B: 770 }, DISH: 800,
@@ -43,7 +43,7 @@ const LAYOUTS = {
       { x: 500, y: 1336, ax: -235, ay: 0 }, { x: 172, y: 1150, ax: 0, ay: -112 }, { x: 172, y: 390, ax: 0, ay: -112 },
       { x: 500, y: 112, ax: -235, ay: 0 }, { x: 828, y: 390, ax: 0, ay: -112 }, { x: 828, y: 1150, ax: 0, ay: -112 },
     ],
-    arches: [120, 660], pillars: [20, 924], F: 1.6, // 휴대폰에서 글씨가 읽히도록 이름표 확대
+    F: 1.6, // 휴대폰에서 글씨가 읽히도록 이름표 확대
   },
 };
 let LY = null, W, H, TB, PX, DISH, POS;
@@ -289,51 +289,41 @@ function defs() {
   const blk = (c) => `<linearGradient id="blk-${c}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${COL[c][0]}"/><stop offset="1" stop-color="${COL[c][1]}"/></linearGradient>
     <radialGradient id="dish-${c}" cx=".5" cy=".4" r=".6"><stop offset="0" stop-color="${COL[c][0]}"/><stop offset="1" stop-color="${COL[c][1]}"/></radialGradient>`;
   return `<defs>
-    <radialGradient id="bgG" cx=".5" cy=".3" r=".8"><stop offset="0" stop-color="#3a2741"/><stop offset=".6" stop-color="#160f1c"/><stop offset="1" stop-color="#08060b"/></radialGradient>
-    <radialGradient id="marble" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#433c48"/><stop offset=".7" stop-color="#211b26"/><stop offset="1" stop-color="#120e16"/></radialGradient>
     <linearGradient id="goldg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9ad"/><stop offset=".5" stop-color="#c99a45"/><stop offset="1" stop-color="#6e4f1c"/></linearGradient>
-    <linearGradient id="bronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0b688"/><stop offset=".5" stop-color="#8f5e38"/><stop offset="1" stop-color="#3a2313"/></linearGradient>
     <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d4d"/><stop offset=".3" stop-color="#ffe94d"/><stop offset=".55" stop-color="#4dff88"/><stop offset=".8" stop-color="#4dc3ff"/><stop offset="1" stop-color="#b34dff"/></linearGradient>
     ${['R', 'G', 'B'].map(blk).join('')}
+    <linearGradient id="vignette" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07050a" stop-opacity=".25"/><stop offset=".55" stop-color="#07050a" stop-opacity=".35"/><stop offset="1" stop-color="#07050a" stop-opacity=".7"/></linearGradient>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1f36"/><stop offset="1" stop-color="#0d0912"/></linearGradient>
     <filter id="blur"><feGaussianBlur stdDeviation="16"/></filter>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".65"/></filter>
   </defs>`;
 }
 
+// 배경·테이블·석상은 Higgsfield로 생성한 이미지(public/img). 블럭·이름표·숫자는 그 위의 SVG 레이어.
 function hall() {
-  const pillar = (x) => `<rect x="${x}" y="0" width="56" height="${H}" fill="#1a1320"/><rect x="${x + 4}" y="0" width="4" height="${H}" fill="#c99a45" opacity=".35"/><rect x="${x + 48}" y="0" width="4" height="${H}" fill="#c99a45" opacity=".2"/>`;
-  const arch = (x) => `<path d="M${x} 330 V140 A110 110 0 0 1 ${x + 220} 140 V330" fill="#0d1a2e" stroke="#6b5426" stroke-width="4" opacity=".7"/>
-    <path d="M${x + 110} 30 V330 M${x} 190 H${x + 220}" stroke="#6b5426" stroke-width="3" opacity=".5"/>`;
-  return `<rect width="${W}" height="${H}" fill="url(#bgG)"/>${LY.arches.map(arch).join('')}${LY.pillars.map(pillar).join('')}
-    <rect y="300" width="${W}" height="${H - 300}" fill="#0b080e" opacity=".55"/>`;
+  return `<image href="img/hall-${LY === LAYOUTS.tall ? 'tall' : 'wide'}.webp" width="${W}" height="${H}" preserveAspectRatio="xMidYMin slice"/>
+    <rect width="${W}" height="${H}" fill="url(#vignette)"/>`;
 }
 
 function table() {
   const { cx, cy, rx, ry } = TB;
-  const ring = (dx, dy, w, o) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx - dx}" ry="${ry - dy}" fill="none" stroke="#c99a45" stroke-width="${w}" opacity="${o}"/>`;
-  return `<ellipse cx="${cx}" cy="${cy + 15}" rx="${rx + 10}" ry="${ry + 12}" fill="#000" opacity=".5" filter="url(#blur)"/>
-    <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#marble)" stroke="url(#goldg)" stroke-width="10"/>
-    ${ring(50, 24, 2, 0.55)}${ring(rx * 0.35, ry * 0.39, 1.5, 0.35)}`;
+  return `<ellipse cx="${cx}" cy="${cy + 30}" rx="${rx + 14}" ry="${ry + 14}" fill="#000" opacity=".65" filter="url(#blur)"/>
+    <ellipse cx="${cx}" cy="${cy + 16}" rx="${rx}" ry="${ry}" fill="#3a2a10"/>
+    <ellipse cx="${cx}" cy="${cy + 8}" rx="${rx}" ry="${ry}" fill="#8a6a2a"/>
+    <image href="img/table.webp" x="${cx - rx}" y="${cy - ry}" width="${rx * 2}" height="${ry * 2}" preserveAspectRatio="none"/>`;
 }
 
+const AW = 190, AH = AW * 612 / 560; // 석상 이미지 크기(접시 윗면 중심이 DISH-6에 오도록 배치)
 function atlas(c) {
   const x = PX[c];
   return `<g transform="translate(${x} ${DISH})">
-    <ellipse cx="0" cy="110" rx="80" ry="70" fill="${COL[c][0]}" opacity=".22" filter="url(#blur)"/>
-    <path d="M-50 84 C-86 74 -98 40 -74 12" stroke="url(#bronze)" stroke-width="24" fill="none" stroke-linecap="round"/>
-    <path d="M50 84 C86 74 98 40 74 12" stroke="url(#bronze)" stroke-width="24" fill="none" stroke-linecap="round"/>
-    <path d="M-60 76 C-68 116 -50 156 -32 176 L32 176 C50 156 68 116 60 76 C30 62 -30 62 -60 76Z" fill="url(#bronze)"/>
-    <path d="M-42 94 Q-20 116 0 100 Q20 116 42 94" stroke="#2c1a0e" fill="none" stroke-width="3" opacity=".6"/>
-    <path d="M0 104 V168 M-15 126 H15 M-13 146 H13" stroke="#2c1a0e" stroke-width="2.5" opacity=".45"/>
-    <circle cx="0" cy="54" r="18" fill="url(#bronze)"/>
-    <path d="M-16 58 Q0 86 16 58 Q0 66 -16 58Z" fill="#ddd5c6" opacity=".9"/>
-    <path d="M-18 48 Q0 30 18 48" stroke="#ddd5c6" stroke-width="5" fill="none" opacity=".8"/>
-    <ellipse cx="0" cy="178" rx="50" ry="11" fill="url(#goldg)"/>
-    <ellipse cx="0" cy="22" rx="94" ry="26" fill="${COL[c][1]}"/>
-    <rect x="-94" y="-6" width="188" height="28" fill="${COL[c][1]}"/>
-    <rect x="-94" y="-6" width="188" height="28" fill="#000" opacity=".25"/>
-    <ellipse cx="0" cy="-6" rx="94" ry="26" fill="url(#dish-${c})" stroke="url(#goldg)" stroke-width="4"/>
-    <text x="0" y="17" text-anchor="middle" font-family="Cinzel" font-weight="700" font-size="19" fill="#fff4d6" stroke="#0007" stroke-width="3" paint-order="stroke">${COL[c][2]}</text>
+    <ellipse cx="0" cy="${AH - 24}" rx="70" ry="14" fill="#000" opacity=".6" filter="url(#blur)"/>
+    <ellipse cx="0" cy="90" rx="95" ry="85" fill="${COL[c][0]}" opacity=".28" filter="url(#blur)"/>
+    <image href="img/atlas.webp" x="${-AW / 2}" y="-19" width="${AW}" height="${AH}"/>
+    <ellipse cx="0" cy="-6" rx="87" ry="10" fill="url(#dish-${c})" opacity=".88"/>
+    <ellipse cx="0" cy="-6" rx="87" ry="10" fill="none" stroke="${COL[c][0]}" stroke-width="2" opacity=".9"/>
+    <rect x="-34" y="3" width="68" height="19" rx="9.5" fill="${COL[c][1]}" stroke="url(#goldg)" stroke-width="1.5"/>
+    <text x="0" y="17" text-anchor="middle" font-family="Cinzel" font-weight="700" font-size="13" letter-spacing="1.5" fill="#fff4d6">${COL[c][2]}</text>
   </g>`;
 }
 
@@ -343,7 +333,8 @@ function block(x, y, h, c, num, cls = '', w = 104) {
     <polygon points="${l},${y} ${l + d},${y - d} ${l + w + d},${y - d} ${l + w},${y}" fill="${COL[c][0]}" opacity=".95"/>
     <polygon points="${l + w},${y} ${l + w + d},${y - d} ${l + w + d},${y + h - d} ${l + w},${y + h}" fill="${COL[c][1]}"/>
     <rect x="${l}" y="${y}" width="${w}" height="${h}" fill="url(#blk-${c})" stroke="#0007"/>
-    <rect x="${l + 4}" y="${y + 3}" width="${w - 8}" height="2" fill="#fff" opacity=".25"/>
+    <rect x="${l + 3}" y="${y + 3}" width="${w - 6}" height="${h * 0.38}" rx="3" fill="#fff" opacity=".16"/>
+    <rect x="${l + 1.5}" y="${y + 1.5}" width="${w - 3}" height="${h - 3}" fill="none" stroke="#ffe9ad" stroke-width="1.2" opacity=".55"/>
     <text x="${l + w / 2}" y="${y + h / 2 + 11}" text-anchor="middle" font-family="Cinzel" font-weight="700" font-size="${Math.min(32, h * 0.7)}" fill="#fff3d0" stroke="#0009" stroke-width="3" paint-order="stroke">${num}</text>
   </g>`;
 }
@@ -352,7 +343,7 @@ function block(x, y, h, c, num, cls = '', w = 104) {
 const BW = 78, BGAP = 8;
 const rowH = (n) => Math.min(46, 270 / Math.max(1, Math.ceil(n / 2)));
 function blocks2(c, nums, lastCls = '') {
-  const h = rowH(nums.length), base = DISH - 18;
+  const h = rowH(nums.length), base = DISH - 9;
   return nums.map((n, i) => block(PX[c] + (i % 2 ? 1 : -1) * (BW + BGAP) / 2, base - (Math.floor(i / 2) + 1) * h, h, c, n,
     i === nums.length - 1 ? lastCls : '', BW)).join('');
 }
@@ -361,7 +352,7 @@ function stackSVG(G, c, fresh) {
   const s = G.tables[c];
   const total = s.reduce((a, b) => a + b, 0);
   const blocks = blocks2(c, s, fresh ? 'drop' : '');
-  const ty = DISH - 18 - Math.ceil(s.length / 2) * rowH(s.length) - 30;
+  const ty = DISH - 9 - Math.ceil(s.length / 2) * rowH(s.length) - 30;
   const danger = total >= 9 ? '#ff6b5e' : total >= 6 ? '#ffd76a' : '#e8dcc0';
   return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="${17 * 1.7 * LY.F}" fill="${danger}" stroke="#000a" stroke-width="5" paint-order="stroke">${total} / 13</text>`;
 }
@@ -389,12 +380,12 @@ function seatSVG(G, p) {
   const label = `${esc(p.name)}${p.seat === G.me ? ' (나)' : ''}${p.connected ? '' : ' · 끊김'}`;
   return `<g>
     ${cur ? `<rect class="glow" x="${x - 112 * F}" y="${y - 44 * F}" width="${224 * F}" height="${88 * F}" rx="16" fill="none" stroke="#ffd76a" stroke-width="5"/>` : ''}
-    <rect x="${x - 102 * F}" y="${y - 36 * F}" width="${204 * F}" height="${72 * F}" rx="12" fill="#120d18" fill-opacity=".92" stroke="${cur ? '#ffd76a' : '#6b5426'}" stroke-width="2" filter="url(#shadow)"/>
+    <rect x="${x - 102 * F}" y="${y - 36 * F}" width="${204 * F}" height="${72 * F}" rx="12" fill="url(#plate)" fill-opacity=".94" stroke="${cur ? '#ffd76a' : '#a8843a'}" stroke-width="2" filter="url(#shadow)"/>
     
     ${p.ai ? `<text x="${x + 90 * F}" y="${y - 20 * F}" text-anchor="end" font-size="${11 * F}" font-weight="700" fill="#a58cff">AI</text>` : ''}
     <text x="${x}" y="${y - 10 * F}" text-anchor="middle" font-size="${17 * F}" font-weight="700" fill="#efe6d2">${label}</text>
     <text x="${x}" y="${y + 26 * F}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${30 * F}" fill="${p.penalty ? '#ff4f45' : '#8f8676'}">${p.penalty ? '-' + p.penalty : '0'}</text>
-    ${side}${G.starter === p.seat ? starterTag(x - 96 * F, y - 36 * F, F) : ''}</g>`;
+    ${side}${G.starter === p.seat ? starterTag(Math.max(26 * F, x - 96 * F), y - 36 * F, F) : ''}</g>`;
 }
 
 let fresh = null; // 방금 쌓인 탑(떨어지는 연출)

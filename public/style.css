@@ -187,3 +187,34 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color:
   #toast { top: 44px; max-width: 94vw; }
   #toast div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; padding: 4px 12px; margin-bottom: 4px; border-radius: 8px; text-align: center; }
 }
+
+/* ===== 리디자인: 생성 배경 + 유리 패널 ===== */
+body { background: #07050a url(img/hall-wide.webp) center / cover no-repeat fixed; }
+body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 35%, #0a0710b0 0%, #07050aee 75%); pointer-events: none; z-index: -1; }
+html { background: #07050a; }
+.panel {
+  background: linear-gradient(180deg, rgba(34, 25, 46, .82), rgba(12, 9, 18, .9));
+  border: 1px solid #a8843a88; border-radius: 16px;
+  box-shadow: 0 0 0 1px #000 inset, 0 1px 0 #ffe9ad22 inset, 0 12px 36px #000a;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+#top { background: linear-gradient(180deg, rgba(27, 20, 36, .92), rgba(10, 7, 14, .88)); border-bottom: 1px solid #a8843a88; backdrop-filter: blur(10px); box-shadow: 0 6px 24px #0008; }
+.logo b { background: linear-gradient(180deg, #fff1c4, #c99a45); -webkit-background-clip: text; background-clip: text; color: transparent; }
+button { background: linear-gradient(180deg, #2e2239, #1a1322); border-color: #6b5426; transition: border-color .15s, transform .08s, filter .15s; }
+button:hover:not(:disabled) { filter: brightness(1.15); }
+button:active:not(:disabled) { transform: translateY(1px); }
+button.primary { background: linear-gradient(180deg, #7b5cf0, #4326a8); border-color: #b9a4ff; box-shadow: 0 0 18px #6a4ee055; }
+.gold-btn { background: linear-gradient(180deg, #e9c877, #a87a2a); color: #24180a; border-color: #ffe9ad; text-shadow: 0 1px 0 #fff5; }
+.pill { background: rgba(14, 10, 20, .75); border-color: #6b542699; }
+.pill.stage { background: linear-gradient(180deg, #6a4ee0, #3a2390); box-shadow: 0 0 14px #6a4ee066; }
+.home-card h1, .lobby-card h1 { background: linear-gradient(180deg, #fff1c4, #c99a45); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 40px; letter-spacing: 2px; }
+.home-card::before { content: 'NUMBER STACK'; font-family: Cinzel, serif; letter-spacing: 6px; font-size: 12px; color: var(--gold2); text-align: center; }
+input, select { background: rgba(8, 6, 12, .8); }
+input:focus, select:focus { outline: 2px solid #a58cff; outline-offset: 1px; }
+.board-wrap { border-radius: 16px; overflow: hidden; }
+#board { border-radius: 16px; }
+.card { background: linear-gradient(160deg, #fffaf0, #e6d2a2 70%, #cdb47a); border-color: #d9b56a; box-shadow: 0 4px 12px #000a, 0 0 0 1px #fff8 inset; }
+.chip { box-shadow: 0 4px 10px #000a, 0 0 0 2px #0004 inset; }
+.ent { background: rgba(16, 12, 22, .8); }
+.ent.now { background: linear-gradient(180deg, #3a2a10, #1f160a); }
+.modal { background: #000c; backdrop-filter: blur(4px); }
