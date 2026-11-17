@@ -345,9 +345,9 @@ function stackSVG(G, c, fresh) {
 
 // 선 플레이어 딱지: 이름표 왼쪽 위 모서리에 걸친 빨간 배지
 function starterTag(x, y, F) {
-  const w = 46 * F, h = 30 * F;
+  const w = 69 * F, h = 45 * F;
   return `<rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="${8 * F}" fill="#d8322a" stroke="#ffd76a" stroke-width="${2.5 * F}" filter="url(#shadow)"/>
-    <text x="${x}" y="${y + 7 * F}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${20 * F}" fill="#fff">선</text>`;
+    <text x="${x}" y="${y + 10.5 * F}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${30 * F}" fill="#fff">선</text>`;
 }
 
 // 글자 폭 추정(한글 1em, 그 외 약 0.6em) — 이름표를 글자에 딱 맞추는 데 쓴다
@@ -361,6 +361,20 @@ function plateBox(G, p) {
   const h = fn + fp + pad * 1.6;
   const x0 = P.a === 'l' ? P.x : P.a === 'r' ? P.x - w : P.x - w / 2;
   return { P, F, name, fn, fp, pad, w, h, x0, y0: P.y - h / 2 };
+}
+
+// 내 턴 테두리: 제한 시간이 있으면 위 가운데에서 시작해 시계 방향으로 줄어드는 링(남은 시간과 동기화),
+// 시간 제한이 없는 AI 차례는 깜빡이는 테두리
+function turnRing(x0, y0, w, h, F) {
+  const g = 5 * F, x = x0 - g, y = y0 - g, W2 = w + 2 * g, H2 = h + 2 * g, r = 12 * F, cx = x + W2 / 2;
+  const left = S.timeLeft ? Math.max(0, S.timeLeft - (Date.now() - recvAt)) : 0;
+  if (!left) return `<rect class="glow" x="${x}" y="${y}" width="${W2}" height="${H2}" rx="${r}" fill="none" stroke="#ffd76a" stroke-width="${4 * F}"/>`;
+  const total = S.settings.turnSec * 1000;
+  const d = `M${cx} ${y} H${x + W2 - r} A${r} ${r} 0 0 1 ${x + W2} ${y + r} V${y + H2 - r} A${r} ${r} 0 0 1 ${x + W2 - r} ${y + H2}
+    H${x + r} A${r} ${r} 0 0 1 ${x} ${y + H2 - r} V${y + r} A${r} ${r} 0 0 1 ${x + r} ${y} Z`;
+  return `<path d="${d}" fill="none" stroke="#ffffff22" stroke-width="${4 * F}"/>
+    <path class="ring" d="${d}" pathLength="100" fill="none" stroke="#ffd76a" stroke-width="${4.5 * F}" stroke-linecap="round"
+      style="animation-duration:${total}ms;animation-delay:${left - total}ms"/>`;
 }
 
 function seatSVG(G, p) {
@@ -379,11 +393,11 @@ function seatSVG(G, p) {
     side = `<text x="${sx}" y="${y + 5 * F}" text-anchor="${right ? 'start' : 'end'}" font-size="${14 * F}" font-weight="700" fill="${p.submitted ? '#7fe0a0' : '#9b907c'}">${p.submitted ? '✓ 제출' : '선택 중…'}</text>`;
   }
   return `<g>
-    ${cur ? `<rect class="glow" x="${x0 - 5 * F}" y="${y0 - 5 * F}" width="${w + 10 * F}" height="${h + 10 * F}" rx="${12 * F}" fill="none" stroke="#ffd76a" stroke-width="${4 * F}"/>` : ''}
-    <rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="${9 * F}" fill="url(#plate)" fill-opacity=".94" stroke="${cur ? '#ffd76a' : '#a8843a'}" stroke-width="${1.5 * F}"/>
+    ${cur ? turnRing(x0, y0, w, h, F) : ''}
+    <rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="${9 * F}" fill="url(#plate)" fill-opacity=".94" stroke="#a8843a" stroke-width="${1.5 * F}"/>
     <text x="${cx}" y="${y0 + pad * 0.7 + fn * 0.9}" text-anchor="middle" font-size="${fn}" font-weight="700" fill="#efe6d2">${esc(name)}${p.ai ? `<tspan font-size="${11 * F}" fill="#a58cff" dx="${3 * F}">AI</tspan>` : ''}</text>
     <text x="${cx}" y="${y0 + h - pad * 0.6 - fp * 0.08}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${fp}" fill="${p.penalty ? '#ff4f45' : '#8f8676'}">${p.penalty ? '-' + p.penalty : '0'}</text>
-    ${side}${G.starter === p.seat ? starterTag(x0 + 23 * F, y0 > 36 * F ? y0 - 17 * F : y0 + h + 17 * F, F) : ''}</g>`;
+    ${side}${G.starter === p.seat ? starterTag(x0 + 35 * F, y0 > 52 * F ? y0 - 25 * F : y0 + h + 25 * F, F) : ''}</g>`;
 }
 
 let fresh = null; // 방금 쌓인 탑(떨어지는 연출)

@@ -216,3 +216,6 @@ input:focus, select:focus { outline: 2px solid #a58cff; outline-offset: 1px; }
 .ent { background: rgba(16, 12, 22, .8); }
 .ent.now { background: linear-gradient(180deg, #3a2a10, #1f160a); }
 .modal { background: #000c; backdrop-filter: blur(4px); }
+/* 턴 타이머 링: 시계 방향으로 사라지고 끝으로 갈수록 빨개진다 */
+.ring { stroke-dasharray: 100 100; animation-name: drain; animation-timing-function: linear; animation-fill-mode: forwards; filter: drop-shadow(0 0 4px #ffd76a); }
+@keyframes drain { 0% { stroke-dashoffset: 0; } 70% { stroke: #ffd76a; } 100% { stroke-dashoffset: -100; stroke: #ff4f45; } }
