@@ -30,7 +30,7 @@ const CN = { R: '레드', G: '그린', B: '블루', W: '무지개' };
 // 보드 배치 2종: 가로 화면(데스크톱·가로 휴대폰) / 세로 휴대폰. 내 자리(k=0)가 아래, 시계 방향으로 k=1..5
 const LAYOUTS = {
   wide: {
-    W: 1600, H: 680, TB: { cx: 800, cy: 400, rx: 720, ry: 240 }, PX: { R: 430, G: 800, B: 1170 }, DISH: 395, S: 1.2, F: 1,
+    W: 1600, H: 680, PX: { R: 430, G: 800, B: 1170 }, DISH: 395, S: 1.2, F: 1,
     POS: [
       { a: 'c', x: 800, y: 644 }, { a: 'l', x: 8, y: 560 }, { a: 'l', x: 8, y: 150 },
       { a: 'c', x: 800, y: 36 }, { a: 'r', x: 1592, y: 150 }, { a: 'r', x: 1592, y: 560 },
@@ -38,19 +38,19 @@ const LAYOUTS = {
   },
   // 세로 휴대폰: 위 3명(좌·중·우) / 아래 3명 — 가운데를 테이블이 전부 쓴다
   tall: {
-    W: 1000, H: 1400, TB: { cx: 500, cy: 720, rx: 495, ry: 560 }, PX: { R: 182, G: 500, B: 818 }, DISH: 784, S: 1.65, F: 1.6,
+    W: 1000, H: 1400, PX: { R: 182, G: 500, B: 818 }, DISH: 784, S: 1.65, F: 1.6,
     POS: [
       { a: 'c', x: 500, y: 1344 }, { a: 'l', x: 8, y: 1344 }, { a: 'l', x: 8, y: 56 },
       { a: 'c', x: 500, y: 56 }, { a: 'r', x: 992, y: 56 }, { a: 'r', x: 992, y: 1344 },
     ],
   },
 };
-let LY = null, W, H, TB, PX, DISH, POS;
+let LY = null, W, H, PX, DISH, POS;
 function applyLayout() {
   const next = innerWidth < 760 && innerHeight > innerWidth ? LAYOUTS.tall : LAYOUTS.wide;
   if (next === LY) return false;
   LY = next;
-  ({ W, H, TB, PX, DISH, POS } = LY);
+  ({ W, H, PX, DISH, POS } = LY);
   for (const id of ['#board', '#fx']) $(id)?.setAttribute('viewBox', `0 0 ${W} ${H}`);
   return true;
 }
@@ -298,12 +298,6 @@ function defs() {
 }
 
 // 배경·테이블·석상은 Higgsfield로 생성한 이미지(public/img). 블럭·이름표·숫자는 그 위의 SVG 레이어.
-function table() {
-  const { cx, cy, rx, ry } = TB;
-  return `<ellipse cx="${cx}" cy="${cy + 30}" rx="${rx + 14}" ry="${ry + 14}" fill="#000" opacity=".65" filter="url(#blur)"/>
-    <image href="img/table.webp" x="${cx - rx}" y="${cy - ry}" width="${rx * 2}" height="${ry * 2}" preserveAspectRatio="none"/>`;
-}
-
 const AW = 190, AH = AW * 612 / 560; // 석상 이미지 크기(접시 윗면 중심이 DISH-6에 오도록 배치)
 function atlas(c) {
   const x = PX[c];
@@ -394,7 +388,7 @@ function seatSVG(G, p) {
 
 let fresh = null; // 방금 쌓인 탑(떨어지는 연출)
 function boardSVG(G) {
-  const out = defs() + table() + ['R', 'G', 'B'].map((c) => `<g transform="${towerT(c)}">${atlas(c)}${stackSVG(G, c, fresh === c)}</g>`).join('') + G.players.map((p) => seatSVG(G, p)).join('');
+  const out = defs() + ['R', 'G', 'B'].map((c) => `<g transform="${towerT(c)}">${atlas(c)}${stackSVG(G, c, fresh === c)}</g>`).join('') + G.players.map((p) => seatSVG(G, p)).join('');
   fresh = null;
   return out;
 }

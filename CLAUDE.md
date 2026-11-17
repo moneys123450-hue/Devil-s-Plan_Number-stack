@@ -21,5 +21,5 @@
 - 채팅: 미구현. `io.to(room)` 브로드캐스트로 붙이면 됨.
 
 ## 그래픽
-- `public/img/` 테이블·아틀라스 석상은 Higgsfield(gpt_image_2_6)로 생성 후 로컬에서 배경 제거·webp 변환한 것. 블럭·이름표·숫자는 그 위 SVG 레이어.
+- `public/img/` 아틀라스 석상(받침대)은 Higgsfield(gpt_image_2_6)로 생성 후 로컬에서 배경 제거·webp 변환한 것. 블럭·이름표·숫자는 그 위 SVG 레이어.
 - Higgsfield 무제한 체험은 Claude Code 환경에서는 적용 안 됨(크레딧만 사용, 이미지 1장 0.25).
