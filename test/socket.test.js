@@ -22,6 +22,10 @@ function bot(pid) {
     const G = s?.game;
     if (!G || G.me == null) return;
     const h = G.hand;
+    if (G.stage === 'draw' && G.deck && !G.deck.some((d) => d.by === G.me)) {
+      const free = G.deck.findIndex((d) => d.by < 0);
+      if (free >= 0) c.emit('pick', free);
+    }
     if (G.stage === 'select' && !h.sub) {
       const chip = Object.keys(h.chips).find((k) => h.chips[k] > 0);
       c.emit('submit', { chip, num: h.cards[h.cards.length - 1] });

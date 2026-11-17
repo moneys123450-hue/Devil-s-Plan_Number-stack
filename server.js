@@ -7,6 +7,7 @@ import * as E from './engine.js';
 import { aiSubmit, aiAct, PERSONAS } from './ai.js';
 
 const SPEED = Number(process.env.SPEED || 1); // 테스트에서 연출 대기시간 축소용
+const DRAW_SEC = 15; // 선 뽑기 카드 고르는 시간
 const ACT_SEC = 30; // 쌓기/패스 차례 제한 시간(카드 선택 시간 설정과 별개)
 const T = { draw: 3200, aiMin: 1200, aiMax: 4500, reveal: 2200, aiTurn: 1400, roundEnd: 2400, phaseEnd: 7000 };
 const ms = (k) => T[k] * SPEED;
@@ -54,7 +55,29 @@ class Room {
   }
   phase() {
     this.clear();
-    E.startPhase(this.g);
+    const g = this.g;
+    E.startPhase(g);
+    const sec = DRAW_SEC * 1000;
+    this.deadline = Date.now() + sec;
+    this.total = sec;
+    for (const p of g.players) if (this.auto(p.seat)) this.later(rand(ms('aiMin'), ms('aiMax')), () => this.autoPick(p.seat));
+    this.later(sec, () => { E.autoDraw(g); this.drawn(); });
+    this.sync();
+  }
+  autoPick(seat) {
+    const free = E.freeSlots(this.g);
+    this.pick(seat, free[Math.floor(Math.random() * free.length)]);
+  }
+  pick(seat, slot) {
+    const g = this.g;
+    if (!g || g.stage !== 'draw' || g.draw) return false;
+    if (E.pickDraw(g, seat, slot)) this.drawn();
+    else this.sync();
+    return true;
+  }
+  // 모두 골랐으면 카드를 공개해 보여 준 뒤 라운드 시작
+  drawn() {
+    this.clear();
     this.deadline = 0;
     this.sync();
     this.later(ms('draw'), () => this.select());
@@ -120,6 +143,7 @@ class Room {
   dropped(id) {
     const g = this.g, seat = this.seatOf(id);
     if (!g || seat == null) return;
+    if (g.stage === 'draw' && !g.draw && !(seat in g.picks)) this.later(1000 * SPEED, () => this.autoPick(seat));
     if (g.stage === 'select' && !g.subs[seat]) this.later(1000 * SPEED, () => this.aiSubmit(seat));
     if (g.stage === 'play' && g.queue[0] === seat) { this.clear(); this.turn(); }
   }
@@ -139,6 +163,8 @@ class Room {
     v.game = {
       stage: g.stage, phase: g.phase, phases: g.phases, round: g.round, rounds: E.ROUNDS,
       starter: g.starter, tables: g.tables, draw: g.draw, log: g.log, result: g.result,
+      // 선 뽑기 카드: 누가 골랐는지는 공개, 숫자는 모두 고른 뒤에만
+      deck: g.stage === 'draw' ? g.deck.map((v, i) => ({ by: Number(Object.keys(g.picks).find((s) => g.picks[s] === i) ?? -1), value: g.draw ? v : null })) : null,
       current: g.stage === 'play' ? g.queue[0] ?? null : null,
       players: g.players.map((p) => ({
         seat: p.seat, name: p.name, ai: p.ai, penalty: p.penalty, pens: p.pens,
@@ -208,6 +234,7 @@ io.on('connection', (sock) => {
   const host = () => room && room.hostId === pid && !room.g;
   sock.on('settings', (s) => { if (host()) { room.settings = cleanSettings(s); room.sync(); } });
   sock.on('start', () => { if (host()) room.start(); });
+  sock.on('pick', (slot) => room?.g && room.pick(room.seatOf(pid), Number(slot)));
   sock.on('submit', (s) => room?.g && room.submit(room.seatOf(pid), s));
   sock.on('act', (a) => room?.g && room.act(room.seatOf(pid), { type: a?.type === 'pass' ? 'pass' : 'stack', table: a?.table }));
   sock.on('lobby', () => {

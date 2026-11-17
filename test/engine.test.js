@@ -61,6 +61,22 @@ test('벌점자 없으면 선은 시계 방향으로 양도', () => {
   assert.equal(g.starter, 4);
 });
 
+test('선 뽑기: 0~6 카드 중 1장씩, 같은 카드 중복 불가, 가장 큰 수가 선', () => {
+  const g = E.newGame(Array.from({ length: 6 }, (_, i) => ({ id: 'p' + i, name: 'p' + i })));
+  E.startPhase(g);
+  assert.equal(g.stage, 'draw');
+  assert.equal(g.starter, null);
+  assert.equal(E.pickDraw(g, 0, 3), false);
+  assert.equal(E.pickDraw(g, 1, 3), false); // 이미 고른 카드
+  assert.equal(1 in g.picks, false);
+  assert.equal(E.pickDraw(g, 0, 4), false); // 이미 고른 사람
+  assert.equal(g.picks[0], 3);
+  E.autoDraw(g);
+  assert.equal(new Set(Object.values(g.picks)).size, 6);
+  assert.equal(g.draw[g.starter], Math.max(...g.draw));
+  assert.equal(g.draw[0], g.deck[3]);
+});
+
 test('탈락 판정', () => {
   const P = (...pens) => pens.map((penalty, seat) => ({ seat, penalty }));
   assert.deepEqual(E.eliminated(P(9, 7, 3, 2, 1, 0)).sort(), [0, 1]);
@@ -74,6 +90,7 @@ test('AI 6명이 3페이즈 완주: 자원 정확히 소진, 사라진 블럭 �
   let wilds = 0, zeros = 0, wildEarly = 0;
   for (;;) {
     E.startPhase(g);
+    E.autoDraw(g);
     for (;;) {
       E.beginRound(g);
       for (const p of g.players) {

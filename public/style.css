@@ -219,3 +219,21 @@ input:focus, select:focus { outline: 2px solid #a58cff; outline-offset: 1px; }
 /* 턴 타이머 링: 시계 방향으로 사라지고 끝으로 갈수록 빨개진다 */
 .ring { stroke-dasharray: 100 100; animation-name: drain; animation-timing-function: linear; animation-fill-mode: forwards; filter: drop-shadow(0 0 4px #ffd76a); }
 @keyframes drain { 0% { stroke-dashoffset: 0; } 70% { stroke: #ffd76a; } 100% { stroke-dashoffset: -100; stroke: #ff4f45; } }
+/* 선 뽑기 카드 */
+.draw-panel { width: min(720px, 100%); }
+.dcards { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 16px 0; perspective: 600px; }
+.dcard { width: 72px; height: 104px; padding: 0; border-radius: 10px; border: 2px solid #c9a75b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  background: repeating-linear-gradient(45deg, #3a2470 0 6px, #2a1858 6px 12px); box-shadow: 0 6px 16px #000a; transition: transform .15s; }
+.dcard .face { font-family: Cinzel, serif; font-size: 34px; font-weight: 700; color: #e3c27a; }
+.dcard .who { font-size: 11px; color: #fff; max-width: 68px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 14px; }
+.dcard:not(:disabled):hover { transform: translateY(-6px); border-color: #ffe9ad; }
+.dcard:disabled { cursor: default; opacity: 1; }
+.dcard.taken:not(.open) { opacity: .55; }
+.dcard.me { outline: 3px solid #a58cff; outline-offset: 2px; opacity: 1 !important; }
+.dcard.open { background: linear-gradient(160deg, #fffaf0, #e6d2a2 70%, #cdb47a); animation: flip .5s; }
+.dcard.open .face { color: #2a1e10; font-style: italic; }
+.dcard.open .who { color: #5a4420; font-weight: 700; }
+.dcard.open:not(.taken) { opacity: .45; }
+.dcard.win { border-color: #ff4f45; box-shadow: 0 0 0 3px #ff4f45, 0 0 24px #ff4f4588; }
+@keyframes flip { from { transform: rotateY(90deg); } to { transform: rotateY(0); } }
+@media (max-width: 760px) { .dcard { width: 44px; height: 66px; } .dcard .face { font-size: 22px; } .dcard .who { font-size: 9px; max-width: 42px; } .dcards { gap: 5px; } }

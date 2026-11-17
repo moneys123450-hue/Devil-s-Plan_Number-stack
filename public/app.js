@@ -179,7 +179,7 @@ function renderSide(G) {
     <ul><li>세 탑에 블럭을 쌓되 합 13 이상을 만들지 마세요. 최종 벌점 상위 2명 탈락.</li></ul>
     <h4>현재 상황</h4>
     <ul><li>${STAGE[G.stage]} · 페이즈 ${G.phase}/${G.phases} · 라운드 ${G.round}/${G.rounds}</li>
-      <li>선 : ${nameOf(G, G.starter)}</li>
+      <li>선 : ${G.starter != null ? nameOf(G, G.starter) : '뽑는 중'}</li>
       <li>내 벌점 : <span class="pen">${me?.penalty ? "-" + me.penalty : 0}</span></li>
       ${['R', 'G', 'B'].map(tower).join('')}</ul>
     <h4>기록</h4><ul class="log">${log}</ul>`;
@@ -265,9 +265,19 @@ function renderOverlay(G) {
   const head = `<tr><th>플레이어</th>${G.players[0].pens.map((_, i) => `<th>P${i + 1}</th>`).join('')}<th>합계</th><th></th></tr>`;
   let html = '';
   if (G.stage === 'draw') {
-    html = `<div class="panel result"><h2>페이즈 ${G.phase} — 선 뽑기</h2>
-      <div class="draws">${G.players.map((p) => `<div class="${p.seat === G.starter ? 'win' : ''}">${esc(p.name)}<b>${G.draw[p.seat]}</b></div>`).join('')}</div>
-      <p><b>${nameOf(G, G.starter)}</b> 님이 선입니다.</p></div>`;
+    // 0~6 카드 7장을 뒷면으로 펼쳐 놓고 한 장씩 고른다. 모두 고르면 뒤집어 공개.
+    const mine = G.deck.some((d) => d.by === G.me);
+    const open = G.draw != null;
+    const cards = G.deck.map((d, i) => {
+      const taken = d.by >= 0, win = open && d.by === G.starter && taken;
+      return `<button class="dcard ${open ? 'open' : ''} ${taken ? 'taken' : ''} ${d.by === G.me ? 'me' : ''} ${win ? 'win' : ''}"
+        data-slot="${i}" ${taken || mine || open ? 'disabled' : ''}>
+        <span class="face">${open ? d.value : '?'}</span>
+        <span class="who">${taken ? esc(G.players[d.by].name) : open ? '남은 카드' : ''}</span></button>`;
+    }).join('');
+    const msg = open ? `<b>${nameOf(G, G.starter)}</b> 님이 <b>${G.draw[G.starter]}</b>${[0, 3, 6].includes(G.draw[G.starter]) ? '으로' : '로'} 선입니다.`
+      : mine ? '다른 플레이어가 고르기를 기다리는 중…' : '카드 한 장을 고르세요. 가장 큰 수가 선이 됩니다.';
+    html = `<div class="panel result draw-panel"><h2>페이즈 ${G.phase} — 선 뽑기</h2><div class="dcards">${cards}</div><p>${msg}</p></div>`;
   } else if (G.stage === 'phaseEnd') {
     html = `<div class="panel result"><h2>페이즈 ${G.phase} 종료</h2><table>${head}${rows()}</table><p class="sub">잠시 후 다음 페이즈가 시작됩니다. 칩과 카드를 다시 받습니다.</p></div>`;
   } else if (G.stage === 'over') {
@@ -279,6 +289,7 @@ function renderOverlay(G) {
   }
   ov.innerHTML = html;
   ov.hidden = !html;
+  ov.querySelectorAll('[data-slot]').forEach((b) => (b.onclick = () => socket.emit('pick', +b.dataset.slot)));
   if ($('#toLobby')) $('#toLobby').onclick = () => socket.emit('lobby');
   if ($('#quit')) $('#quit').onclick = () => socket.emit('leave');
 }

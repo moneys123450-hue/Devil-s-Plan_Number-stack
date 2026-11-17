@@ -32,7 +32,7 @@ function push(g, e) {
   return e;
 }
 
-// 페이즈 시작: 재분배 + 선 뽑기(1~6 중복 없이, 6을 뽑은 사람이 선). 테이블은 비운다.
+// 페이즈 시작: 재분배 + 선 뽑기 준비. 0~6 카드 7장을 뒷면으로 펼치고 각자 1장씩 고른다(pickDraw). 테이블은 비운다.
 export function startPhase(g, rng = Math.random) {
   g.phase++;
   g.round = 1;
@@ -42,11 +42,34 @@ export function startPhase(g, rng = Math.random) {
     p.chips = { R: 2, G: 2, B: 2, W: 1 };
     p.pens[g.phase - 1] = 0;
   }
-  g.draw = shuffle([1, 2, 3, 4, 5, 6], rng);
-  g.starter = g.draw.indexOf(6);
+  g.deck = shuffle([0, 1, 2, 3, 4, 5, 6], rng); // 자리(slot) → 숫자, 공개 전까지 비공개
+  g.picks = {}; // seat → slot
+  g.draw = null; // 공개 후 seat → 숫자
+  g.starter = null;
   g.stage = 'draw';
   g.subs = {}; g.queue = []; g.history = []; g.passed = [];
+}
+
+export const freeSlots = (g) => g.deck.map((_, i) => i).filter((i) => !Object.values(g.picks).includes(i));
+
+// 선 뽑기 카드 1장 고르기. 모두 고르면 공개하고 가장 큰 수가 선. 완료되면 true.
+export function pickDraw(g, seat, slot) {
+  if (g.stage !== 'draw' || g.draw || !g.players[seat] || seat in g.picks || !freeSlots(g).includes(slot)) return false;
+  g.picks[seat] = slot;
+  if (Object.keys(g.picks).length < N) return false;
+  g.draw = g.players.map((p) => g.deck[g.picks[p.seat]]);
+  g.starter = g.draw.indexOf(Math.max(...g.draw));
   push(g, { type: 'draw', phase: g.phase, seat: g.starter });
+  return true;
+}
+
+// 아직 안 고른 사람은 남은 카드 중 랜덤
+export function autoDraw(g, rng = Math.random) {
+  for (const p of g.players) {
+    if (p.seat in g.picks) continue;
+    const free = freeSlots(g);
+    pickDraw(g, p.seat, free[Math.floor(rng() * free.length)]);
+  }
 }
 
 export function beginRound(g) {
