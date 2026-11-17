@@ -7,6 +7,7 @@ import * as E from './engine.js';
 import { aiSubmit, aiAct, PERSONAS } from './ai.js';
 
 const SPEED = Number(process.env.SPEED || 1); // 테스트에서 연출 대기시간 축소용
+const ACT_SEC = 30; // 쌓기/패스 차례 제한 시간(카드 선택 시간 설정과 별개)
 const T = { draw: 3200, aiMin: 1200, aiMax: 4500, reveal: 2200, aiTurn: 1400, roundEnd: 2400, phaseEnd: 7000 };
 const ms = (k) => T[k] * SPEED;
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -63,6 +64,7 @@ class Room {
     E.beginRound(g);
     const sec = this.settings.turnSec * 1000;
     this.deadline = Date.now() + sec;
+    this.total = sec;
     for (const p of g.players) if (this.auto(p.seat)) this.later(rand(ms('aiMin'), ms('aiMax')), () => this.aiSubmit(p.seat));
     this.later(sec, () => { for (const p of g.players) if (!g.subs[p.seat]) this.submit(p.seat, E.randomPick(p)); });
     this.sync();
@@ -92,8 +94,9 @@ class Room {
       this.deadline = 0;
       this.later(ms('aiTurn'), () => this.act(seat, aiAct(g, seat, p.persona)));
     } else {
-      const sec = this.settings.turnSec * 1000;
+      const sec = ACT_SEC * 1000;
       this.deadline = Date.now() + sec;
+      this.total = sec;
       // 시간 초과: 쌓기(와일드면 가장 안전한 테이블)
       this.later(sec, () => this.act(seat, aiAct(g, seat, undefined, true)));
     }
@@ -127,6 +130,7 @@ class Room {
       code: this.code, hostId: this.hostId, you: id, settings: this.settings,
       members: this.members.map(({ id, name, connected }) => ({ id, name, connected })),
       timeLeft: this.deadline ? Math.max(0, this.deadline - Date.now()) : 0,
+      timeTotal: this.total ?? 0,
       game: null,
     };
     if (!g) return v;

@@ -363,13 +363,13 @@ function plateBox(G, p) {
   return { P, F, name, fn, fp, pad, w, h, x0, y0: P.y - h / 2 };
 }
 
-// 내 턴 테두리: 제한 시간이 있으면 위 가운데에서 시작해 시계 방향으로 줄어드는 링(남은 시간과 동기화),
+// 차례 테두리(행동 차례 + 카드 선택 중인 사람): 제한 시간이 있으면 위 가운데에서 시작해 시계 방향으로 줄어드는 링(남은 시간과 동기화),
 // 시간 제한이 없는 AI 차례는 깜빡이는 테두리
 function turnRing(x0, y0, w, h, F) {
   const g = 5 * F, x = x0 - g, y = y0 - g, W2 = w + 2 * g, H2 = h + 2 * g, r = 12 * F, cx = x + W2 / 2;
   const left = S.timeLeft ? Math.max(0, S.timeLeft - (Date.now() - recvAt)) : 0;
   if (!left) return `<rect class="glow" x="${x}" y="${y}" width="${W2}" height="${H2}" rx="${r}" fill="none" stroke="#ffd76a" stroke-width="${4 * F}"/>`;
-  const total = S.settings.turnSec * 1000;
+  const total = S.timeTotal || left;
   const d = `M${cx} ${y} H${x + W2 - r} A${r} ${r} 0 0 1 ${x + W2} ${y + r} V${y + H2 - r} A${r} ${r} 0 0 1 ${x + W2 - r} ${y + H2}
     H${x + r} A${r} ${r} 0 0 1 ${x} ${y + H2 - r} V${y + r} A${r} ${r} 0 0 1 ${x + r} ${y} Z`;
   return `<path d="${d}" fill="none" stroke="#ffffff22" stroke-width="${4 * F}"/>
@@ -393,7 +393,7 @@ function seatSVG(G, p) {
     side = `<text x="${sx}" y="${y + 5 * F}" text-anchor="${right ? 'start' : 'end'}" font-size="${14 * F}" font-weight="700" fill="${p.submitted ? '#7fe0a0' : '#9b907c'}">${p.submitted ? '✓ 제출' : '선택 중…'}</text>`;
   }
   return `<g>
-    ${cur ? turnRing(x0, y0, w, h, F) : ''}
+    ${cur || (G.stage === 'select' && !p.submitted) ? turnRing(x0, y0, w, h, F) : ''}
     <rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="${9 * F}" fill="url(#plate)" fill-opacity=".94" stroke="#a8843a" stroke-width="${1.5 * F}"/>
     <text x="${cx}" y="${y0 + pad * 0.7 + fn * 0.9}" text-anchor="middle" font-size="${fn}" font-weight="700" fill="#efe6d2">${esc(name)}${p.ai ? `<tspan font-size="${11 * F}" fill="#a58cff" dx="${3 * F}">AI</tspan>` : ''}</text>
     <text x="${cx}" y="${y0 + h - pad * 0.6 - fp * 0.08}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${fp}" fill="${p.penalty ? '#ff4f45' : '#8f8676'}">${p.penalty ? '-' + p.penalty : '0'}</text>
