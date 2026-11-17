@@ -298,10 +298,6 @@ function defs() {
 }
 
 // 배경·테이블·석상은 Higgsfield로 생성한 이미지(public/img). 블럭·이름표·숫자는 그 위의 SVG 레이어.
-function hall() {
-  return `<rect width="${W}" height="${H}" fill="#000"/>`;
-}
-
 function table() {
   const { cx, cy, rx, ry } = TB;
   return `<ellipse cx="${cx}" cy="${cy + 30}" rx="${rx + 14}" ry="${ry + 14}" fill="#000" opacity=".65" filter="url(#blur)"/>
@@ -398,7 +394,7 @@ function seatSVG(G, p) {
 
 let fresh = null; // 방금 쌓인 탑(떨어지는 연출)
 function boardSVG(G) {
-  const out = defs() + hall() + table() + ['R', 'G', 'B'].map((c) => `<g transform="${towerT(c)}">${atlas(c)}${stackSVG(G, c, fresh === c)}</g>`).join('') + G.players.map((p) => seatSVG(G, p)).join('');
+  const out = defs() + table() + ['R', 'G', 'B'].map((c) => `<g transform="${towerT(c)}">${atlas(c)}${stackSVG(G, c, fresh === c)}</g>`).join('') + G.players.map((p) => seatSVG(G, p)).join('');
   fresh = null;
   return out;
 }

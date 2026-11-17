@@ -189,8 +189,6 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color:
 }
 
 /* ===== 리디자인: 생성 배경 + 유리 패널 ===== */
-body { background: #07050a url(img/hall-wide.webp) center / cover no-repeat fixed; }
-body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 35%, #0a0710b0 0%, #07050aee 75%); pointer-events: none; z-index: -1; }
 html { background: #07050a; }
 .panel {
   background: linear-gradient(180deg, rgba(34, 25, 46, .82), rgba(12, 9, 18, .9));
@@ -218,5 +216,3 @@ input:focus, select:focus { outline: 2px solid #a58cff; outline-offset: 1px; }
 .ent { background: rgba(16, 12, 22, .8); }
 .ent.now { background: linear-gradient(180deg, #3a2a10, #1f160a); }
 .modal { background: #000c; backdrop-filter: blur(4px); }
-/* 보드 영역은 검은 바탕 */
-.board-wrap, #board { background: #000; }
