@@ -30,20 +30,19 @@ const CN = { R: '레드', G: '그린', B: '블루', W: '무지개' };
 // 보드 배치 2종: 가로 화면(데스크톱·가로 휴대폰) / 세로 휴대폰. 내 자리(k=0)가 아래, 시계 방향으로 k=1..5
 const LAYOUTS = {
   wide: {
-    W: 1600, H: 680, TB: { cx: 800, cy: 425, rx: 650, ry: 210 }, PX: { R: 500, G: 800, B: 1100 }, DISH: 400,
+    W: 1600, H: 680, TB: { cx: 800, cy: 400, rx: 720, ry: 240 }, PX: { R: 430, G: 800, B: 1170 }, DISH: 395, S: 1.2, F: 1,
     POS: [
-      { x: 800, y: 636, ax: -165, ay: 0 }, { x: 170, y: 560, ax: 0, ay: -100 }, { x: 210, y: 262, ax: 0, ay: -100 },
-      { x: 800, y: 58, ax: -165, ay: 0 }, { x: 1390, y: 262, ax: 0, ay: -100 }, { x: 1430, y: 560, ax: 0, ay: -100 },
+      { a: 'c', x: 800, y: 644 }, { a: 'l', x: 8, y: 560 }, { a: 'l', x: 8, y: 150 },
+      { a: 'c', x: 800, y: 36 }, { a: 'r', x: 1592, y: 150 }, { a: 'r', x: 1592, y: 560 },
     ],
-    F: 1,
   },
+  // 세로 휴대폰: 위 3명(좌·중·우) / 아래 3명 — 가운데를 테이블이 전부 쓴다
   tall: {
-    W: 1000, H: 1400, TB: { cx: 500, cy: 760, rx: 475, ry: 470 }, PX: { R: 230, G: 500, B: 770 }, DISH: 800,
+    W: 1000, H: 1400, TB: { cx: 500, cy: 720, rx: 495, ry: 560 }, PX: { R: 182, G: 500, B: 818 }, DISH: 784, S: 1.65, F: 1.6,
     POS: [
-      { x: 500, y: 1336, ax: -235, ay: 0 }, { x: 172, y: 1150, ax: 0, ay: -112 }, { x: 172, y: 390, ax: 0, ay: -112 },
-      { x: 500, y: 112, ax: -235, ay: 0 }, { x: 828, y: 390, ax: 0, ay: -112 }, { x: 828, y: 1150, ax: 0, ay: -112 },
+      { a: 'c', x: 500, y: 1344 }, { a: 'l', x: 8, y: 1344 }, { a: 'l', x: 8, y: 56 },
+      { a: 'c', x: 500, y: 56 }, { a: 'r', x: 992, y: 56 }, { a: 'r', x: 992, y: 1344 },
     ],
-    F: 1.6, // 휴대폰에서 글씨가 읽히도록 이름표 확대
   },
 };
 let LY = null, W, H, TB, PX, DISH, POS;
@@ -292,7 +291,6 @@ function defs() {
     <linearGradient id="goldg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9ad"/><stop offset=".5" stop-color="#c99a45"/><stop offset="1" stop-color="#6e4f1c"/></linearGradient>
     <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d4d"/><stop offset=".3" stop-color="#ffe94d"/><stop offset=".55" stop-color="#4dff88"/><stop offset=".8" stop-color="#4dc3ff"/><stop offset="1" stop-color="#b34dff"/></linearGradient>
     ${['R', 'G', 'B'].map(blk).join('')}
-    <linearGradient id="vignette" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07050a" stop-opacity=".25"/><stop offset=".55" stop-color="#07050a" stop-opacity=".35"/><stop offset="1" stop-color="#07050a" stop-opacity=".7"/></linearGradient>
     <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1f36"/><stop offset="1" stop-color="#0d0912"/></linearGradient>
     <filter id="blur"><feGaussianBlur stdDeviation="16"/></filter>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity=".65"/></filter>
@@ -301,15 +299,12 @@ function defs() {
 
 // 배경·테이블·석상은 Higgsfield로 생성한 이미지(public/img). 블럭·이름표·숫자는 그 위의 SVG 레이어.
 function hall() {
-  return `<image href="img/hall-${LY === LAYOUTS.tall ? 'tall' : 'wide'}.webp" width="${W}" height="${H}" preserveAspectRatio="xMidYMin slice"/>
-    <rect width="${W}" height="${H}" fill="url(#vignette)"/>`;
+  return `<rect width="${W}" height="${H}" fill="#000"/>`;
 }
 
 function table() {
   const { cx, cy, rx, ry } = TB;
   return `<ellipse cx="${cx}" cy="${cy + 30}" rx="${rx + 14}" ry="${ry + 14}" fill="#000" opacity=".65" filter="url(#blur)"/>
-    <ellipse cx="${cx}" cy="${cy + 16}" rx="${rx}" ry="${ry}" fill="#3a2a10"/>
-    <ellipse cx="${cx}" cy="${cy + 8}" rx="${rx}" ry="${ry}" fill="#8a6a2a"/>
     <image href="img/table.webp" x="${cx - rx}" y="${cy - ry}" width="${rx * 2}" height="${ry * 2}" preserveAspectRatio="none"/>`;
 }
 
@@ -341,7 +336,8 @@ function block(x, y, h, c, num, cls = '', w = 104) {
 
 // 블럭은 2줄로 쌓는다: 1층 왼쪽 → 1층 오른쪽 → 2층 왼쪽 … (마지막 블럭이 항상 맨 위)
 const BW = 78, BGAP = 8;
-const rowH = (n) => Math.min(46, 270 / Math.max(1, Math.ceil(n / 2)));
+const rowH = (n) => Math.min(46, 230 / Math.max(1, Math.ceil(n / 2)));
+const towerT = (c) => `translate(${PX[c]} ${DISH}) scale(${LY.S}) translate(${-PX[c]} ${-DISH})`;
 function blocks2(c, nums, lastCls = '') {
   const h = rowH(nums.length), base = DISH - 9;
   return nums.map((n, i) => block(PX[c] + (i % 2 ? 1 : -1) * (BW + BGAP) / 2, base - (Math.floor(i / 2) + 1) * h, h, c, n,
@@ -354,7 +350,7 @@ function stackSVG(G, c, fresh) {
   const blocks = blocks2(c, s, fresh ? 'drop' : '');
   const ty = DISH - 9 - Math.ceil(s.length / 2) * rowH(s.length) - 30;
   const danger = total >= 9 ? '#ff6b5e' : total >= 6 ? '#ffd76a' : '#e8dcc0';
-  return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="${17 * 1.7 * LY.F}" fill="${danger}" stroke="#000a" stroke-width="5" paint-order="stroke">${total} / 13</text>`;
+  return `${blocks}<text x="${PX[c]}" y="${ty}" text-anchor="middle" font-family="Noto Sans KR" font-weight="700" font-size="${17 * 1.7}" fill="${danger}" stroke="#000a" stroke-width="5" paint-order="stroke">${total} / 13</text>`;
 }
 
 // 선 플레이어 딱지: 이름표 왼쪽 위 모서리에 걸친 빨간 배지
@@ -364,33 +360,45 @@ function starterTag(x, y, F) {
     <text x="${x}" y="${y + 7 * F}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${20 * F}" fill="#fff">선</text>`;
 }
 
+// 글자 폭 추정(한글 1em, 그 외 약 0.6em) — 이름표를 글자에 딱 맞추는 데 쓴다
+const tw = (str, fs) => [...str].reduce((a, ch) => a + (/[ㄱ-힣]/.test(ch) ? 1 : ch === ' ' ? 0.32 : 0.62), 0) * fs;
+
+function plateBox(G, p) {
+  const P = POS[rel(G, p.seat)], F = LY.F;
+  const name = p.name + (p.seat === G.me ? ' (나)' : '') + (p.connected ? '' : ' · 끊김');
+  const fn = 17 * F, fp = 28 * F, pad = 10 * F;
+  const w = Math.max(tw(name, fn) + (p.ai ? tw(' AI', 11 * F) : 0), tw('-' + p.penalty, fp)) + pad * 2;
+  const h = fn + fp + pad * 1.6;
+  const x0 = P.a === 'l' ? P.x : P.a === 'r' ? P.x - w : P.x - w / 2;
+  return { P, F, name, fn, fp, pad, w, h, x0, y0: P.y - h / 2 };
+}
+
 function seatSVG(G, p) {
-  const k = rel(G, p.seat), { x, y } = POS[k];
-  const cur = G.current === p.seat;
-  const F = LY.F;
-  const sx = x + (k === 0 || k === 3 ? 150 : x < TB.cx ? 145 : -145) * F;
+  const { P, F, name, fn, fp, pad, w, h, x0, y0 } = plateBox(G, p);
+  const cur = G.current === p.seat, cx = x0 + w / 2, y = P.y;
+  // 제출한 칩·카드는 이름표 안쪽(테이블 쪽) 옆에
+  const right = P.a !== 'r', sx = right ? x0 + w + 10 * F : x0 - 10 * F;
+  const r = 13 * F, cw = 24 * F, ch = 36 * F;
   let side = '';
   if (p.sub) {
-    side = `<circle cx="${sx - 18}" cy="${y}" r="16" fill="${p.sub.chip === 'W' ? 'url(#rainbow)' : COL[p.sub.chip][0]}" stroke="#fff" stroke-width="2" stroke-dasharray="4 3"/>
-      <rect x="${sx + 4}" y="${y - 22}" width="30" height="44" rx="4" fill="#f6e8c6" stroke="#c9a75b" stroke-width="2"/>
-      <text x="${sx + 19}" y="${y + 9}" text-anchor="middle" font-family="Cinzel" font-weight="700" font-size="24" fill="#2a1e10">${p.sub.num}</text>`;
+    const chipX = right ? sx + r : sx - cw - 6 * F - r, cardX = right ? sx + 2 * r + 6 * F : sx - cw;
+    side = `<circle cx="${chipX}" cy="${y}" r="${r}" fill="${p.sub.chip === 'W' ? 'url(#rainbow)' : COL[p.sub.chip][0]}" stroke="#fff" stroke-width="${2 * F}" stroke-dasharray="${4 * F} ${3 * F}"/>
+      <rect x="${cardX}" y="${y - ch / 2}" width="${cw}" height="${ch}" rx="${4 * F}" fill="#f6e8c6" stroke="#c9a75b" stroke-width="${2 * F}"/>
+      <text x="${cardX + cw / 2}" y="${y + 8 * F}" text-anchor="middle" font-family="Cinzel" font-weight="700" font-size="${22 * F}" fill="#2a1e10">${p.sub.num}</text>`;
   } else if (G.stage === 'select') {
-    side = `<text x="${sx}" y="${y + 6}" text-anchor="middle" font-size="${15 * F}" font-weight="700" fill="${p.submitted ? '#7fe0a0' : '#9b907c'}">${p.submitted ? '✓ 제출' : '선택 중…'}</text>`;
+    side = `<text x="${sx}" y="${y + 5 * F}" text-anchor="${right ? 'start' : 'end'}" font-size="${14 * F}" font-weight="700" fill="${p.submitted ? '#7fe0a0' : '#9b907c'}">${p.submitted ? '✓ 제출' : '선택 중…'}</text>`;
   }
-  const label = `${esc(p.name)}${p.seat === G.me ? ' (나)' : ''}${p.connected ? '' : ' · 끊김'}`;
   return `<g>
-    ${cur ? `<rect class="glow" x="${x - 112 * F}" y="${y - 44 * F}" width="${224 * F}" height="${88 * F}" rx="16" fill="none" stroke="#ffd76a" stroke-width="5"/>` : ''}
-    <rect x="${x - 102 * F}" y="${y - 36 * F}" width="${204 * F}" height="${72 * F}" rx="12" fill="url(#plate)" fill-opacity=".94" stroke="${cur ? '#ffd76a' : '#a8843a'}" stroke-width="2" filter="url(#shadow)"/>
-    
-    ${p.ai ? `<text x="${x + 90 * F}" y="${y - 20 * F}" text-anchor="end" font-size="${11 * F}" font-weight="700" fill="#a58cff">AI</text>` : ''}
-    <text x="${x}" y="${y - 10 * F}" text-anchor="middle" font-size="${17 * F}" font-weight="700" fill="#efe6d2">${label}</text>
-    <text x="${x}" y="${y + 26 * F}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${30 * F}" fill="${p.penalty ? '#ff4f45' : '#8f8676'}">${p.penalty ? '-' + p.penalty : '0'}</text>
-    ${side}${G.starter === p.seat ? starterTag(Math.max(26 * F, x - 96 * F), y - 36 * F, F) : ''}</g>`;
+    ${cur ? `<rect class="glow" x="${x0 - 5 * F}" y="${y0 - 5 * F}" width="${w + 10 * F}" height="${h + 10 * F}" rx="${12 * F}" fill="none" stroke="#ffd76a" stroke-width="${4 * F}"/>` : ''}
+    <rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="${9 * F}" fill="url(#plate)" fill-opacity=".94" stroke="${cur ? '#ffd76a' : '#a8843a'}" stroke-width="${1.5 * F}"/>
+    <text x="${cx}" y="${y0 + pad * 0.7 + fn * 0.9}" text-anchor="middle" font-size="${fn}" font-weight="700" fill="#efe6d2">${esc(name)}${p.ai ? `<tspan font-size="${11 * F}" fill="#a58cff" dx="${3 * F}">AI</tspan>` : ''}</text>
+    <text x="${cx}" y="${y0 + h - pad * 0.6 - fp * 0.08}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="${fp}" fill="${p.penalty ? '#ff4f45' : '#8f8676'}">${p.penalty ? '-' + p.penalty : '0'}</text>
+    ${side}${G.starter === p.seat ? starterTag(x0 + 23 * F, y0 > 36 * F ? y0 - 17 * F : y0 + h + 17 * F, F) : ''}</g>`;
 }
 
 let fresh = null; // 방금 쌓인 탑(떨어지는 연출)
 function boardSVG(G) {
-  const out = defs() + hall() + table() + ['R', 'G', 'B'].map((c) => atlas(c) + stackSVG(G, c, fresh === c)).join('') + G.players.map((p) => seatSVG(G, p)).join('');
+  const out = defs() + hall() + table() + ['R', 'G', 'B'].map((c) => `<g transform="${towerT(c)}">${atlas(c)}${stackSVG(G, c, fresh === c)}</g>`).join('') + G.players.map((p) => seatSVG(G, p)).join('');
   fresh = null;
   return out;
 }
@@ -416,10 +424,10 @@ function effects(G) {
 function burstFX(G, e) {
   const fx = $('#fx');
   const blocks = blocks2(e.table, e.removed);
-  const { x, y } = POS[rel(G, e.seat)];
+  const b = plateBox(G, G.players[e.seat]), x = b.x0 + b.w / 2, y = b.P.y + (b.P.y > H / 2 ? 0 : 100 * b.F);
   const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  g.innerHTML = `<ellipse cx="${PX[e.table]}" cy="${DISH - 80}" rx="110" ry="150" fill="${COL[e.table][0]}" class="float" filter="url(#fxblur)"/>
-    <g class="burst">${blocks}</g>
+  g.innerHTML = `<g transform="${towerT(e.table)}"><ellipse cx="${PX[e.table]}" cy="${DISH - 80}" rx="110" ry="150" fill="${COL[e.table][0]}" class="float" filter="url(#fxblur)"/>
+    <g class="burst">${blocks}</g></g>
     <text class="float" x="${x}" y="${y - 50}" text-anchor="middle" font-family="Noto Sans KR" font-weight="900" font-size="54" fill="#ff4f45" stroke="#000" stroke-width="4" paint-order="stroke">-${e.removed.length}</text>`;
   fx.append(g);
   setTimeout(() => g.remove(), 2000);

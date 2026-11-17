@@ -218,3 +218,5 @@ input:focus, select:focus { outline: 2px solid #a58cff; outline-offset: 1px; }
 .ent { background: rgba(16, 12, 22, .8); }
 .ent.now { background: linear-gradient(180deg, #3a2a10, #1f160a); }
 .modal { background: #000c; backdrop-filter: blur(4px); }
+/* 보드 영역은 검은 바탕 */
+.board-wrap, #board { background: #000; }
